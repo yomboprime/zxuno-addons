@@ -14,9 +14,12 @@ module veripac9_zxuno (
     parameter ZXUNO_DATA_REG = 8'hFA;
     parameter ZXUNO_STATUS_REG = 8'hFB;
     
+    parameter VERIPAC_CONTROL_REG = 8'hCA;
+    
     reg veripac_wr = 0;
     reg veripac_rd = 0;
     reg step = 0;
+    reg reset = 0;
     reg [7: 0] veripac_addr = 8'b0;
     reg [7: 0] veripac_din;
     wire [7: 0] veripac_dout;
@@ -27,8 +30,9 @@ module veripac9_zxuno (
         .rd(veripac_rd),
         .wr(veripac_wr),
         .din(veripac_din),
-        .dout(veripac_dout)//,
-        //.step
+        .dout(veripac_dout),
+        .step(step),
+        .reset(reset)
     );
 
     //(zxuno_addr == UARTDATA && zxuno_regrd == 1'b1);
@@ -49,9 +53,14 @@ module veripac9_zxuno (
     end
 
     always @(posedge clk) begin
-        if (zxuno_addr == ZXUNO_DATA_REG && zxuno_regwr == 1'b1 ) begin
-            veripac_wr <= 1'b1;
-            veripac_din <= din;
+        if ( zxuno_addr == ZXUNO_DATA_REG && zxuno_regwr == 1'b1 ) begin
+            if ( veripac_addr == VERIPAC_CONTROL_REG ) begin
+                { reset, step } <= din[1: 0];
+            end
+            else begin
+                veripac_wr <= 1'b1;
+                veripac_din <= din;
+            end
         end
         else begin
             veripac_wr <= 1'b0;

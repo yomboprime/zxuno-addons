@@ -20,8 +20,14 @@ CA: Control:
 		2: ejecución
 		3: halt
 	bit 2: buzzer (1 ó 0)
+	
+	En escritura:
+	bit 0: Señal STEP
+	bit 1: Señal RESET
 
-CB: Registro de escritura de la tecla pulsada. Hay además un flipflop interno para saber cuando ha habido una tecla nueva.
+CB: Registro para escribir las teclas pulsadas.
+En lectura:
+	bit 0: Indica a 1 que se está requiriendo una tecla.
 
 CC: acumulador
 
