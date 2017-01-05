@@ -1,5 +1,9 @@
 # veripac9
-El procesador interpretado del cartucho Videopac-9, implementado como un subprocesador del ZX Spectrum.
+Este proyecto es el procesador interpretado del cartucho Videopac-9, implementado como un subprocesador del ZX Spectrum.
+
+No se necesita ningún addon (dispositivo en el puerto de expansión del ZX-Uno), lo único necesario es cargar este core, y luego cargar el software VERIPAC9.tap que está [aquí](https://github.com/yomboprime/ZXYLib)
+
+
 
 
 El bus externo se conecta a la memoria interna, donde se da preferencia al maestro de bus externo frente al uso interno.
@@ -45,8 +49,10 @@ F0 - FF: 16 registros
 
 ADICIONES / MODIFICACIONES A LA MAQUINA
 
+Front-end de spectrum que permite cargar programas desde SD y ejecutar paso a paso entre otras cosas.
+
 202 bytes de ram en lugar de 100
 
-números hexadecimales 0 a FF o sea de 0 a 255 decimal
+números hexadecimales 0 a FF o sea de 0 a 255 decimal, en lugar de dos dígitos decimales.
 
 Instrucciones nuevas: por determinar los opcodes no usados.

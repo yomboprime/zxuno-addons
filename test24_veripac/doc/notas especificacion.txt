@@ -1,0 +1,13 @@
+
+Videopac G7000
+--------------
+
+    UCP : microcontrolador Intel 8048 a 1,79 MHz
+    Memoria RAM : 256 octetos y 64 más integrados en el microcontrolador
+    Memoria ROM BIOS : 1024 octetos de ROM
+    Gráficos : 128x64x16 colores
+    Monitor (G7200/Jet 27/7200) : Philips 9" blanco y negro
+    Sonido : 1 canal, 8 voces
+    Teclado : QWERTY, por membrana
+    Soporte : Cartuchos de entre 1 y 8 Kb.
+    Periféricos : 2 mandos de juego de 8 direcciones con un botón « Action » .

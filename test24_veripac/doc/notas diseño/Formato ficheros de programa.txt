@@ -1,0 +1,12 @@
+
+Bytes de instrucciones como dos caracteres contiguos en hexadecimal en mayúsculas o minusculas.
+
+Los bytes pueden estar separados por líneas, espacios y comentarios.
+
+Comentarios de línea comenzando con #
+
+Fin / separación de programas con !
+
+La marca especial $ finaliza el programa y vuelve la ejecución al principio del fichero.
+
+La instrucción HALT (FF) pasa al siguiente programa.

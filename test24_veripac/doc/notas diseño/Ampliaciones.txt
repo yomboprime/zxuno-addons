@@ -1,0 +1,53 @@
+
+Registro B:
+-----------
+======Buzzer===== | ==========Screen==========
+      MSB                            LSB
+       n2  n1  n0    l   c3  c2  c1  c0
+       
+l: Line (1 bit)
+c3  c2  c1  c0: Column (4 bits)
+     
+      n2  n1  n0
+ DO    0   0   0
+ RE    0   0   1
+ MI    0   1   0
+ FA    0   1   1
+ SOL   1   0   0
+ LA    1   0   1
+ SI    1   1   0
+ DO    1   1   1
+
+Buzzer: 500 ms
+ 
+Ejemplos:
+
+Ajuste de Buzzer para la nota DO y
+ajustamos la posición de salida en pantalla en
+la 2ª linea y la columna 12.
+00011100 = 1C hex.
+
+Ajuste de Buzzer para la nota FA y ajustamos la
+posición de salida en la 1ª linea y la columna 5
+10000101 = 85 hex
+
+-----------
+
+Screen registers: 16 x 2 characters.
+
+In each caracer:
+
+=====Color==== | ==========Character code============
+      MSB                                       LSB
+     col1 col0   char5 char4 char3 char2 char1 char0 
+
+Color:
+       col1 col0
+green    0    0
+red      0    1
+blue     1    0
+yellow   1    1
+
+Character code: see manual for character set.
+
+-----------
