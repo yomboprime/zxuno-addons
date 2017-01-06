@@ -69,6 +69,11 @@ module veripac9 (
     localparam I_BEQRNN = 4'h3;
     localparam I_BGTRNN = 4'h4;
     localparam I_BLTRNN = 4'h5;
+    
+    // New instructions not present in original machine
+    localparam I_LDVANN = 8'h0A;
+    localparam I_PSH = 8'h0C;
+    localparam I_POP = 8'h0D;
 
     integer i;
  
@@ -120,8 +125,9 @@ module veripac9 (
     function isTwoByteInstruction;
         input [7: 0] instructionFirstByte;
         
-        isTwoByteInstruction = instructionFirstByte[7:4] >= 4'h1 &&
-                               instructionFirstByte[7:4] <= 4'h6;
+        isTwoByteInstruction = ( instructionFirstByte[7:4] >= 4'h1 &&
+                                 instructionFirstByte[7:4] <= 4'h6 ) ||
+                                 instructionFirstByte == I_LDVANN;
     endfunction
     
     function isRegisterInstruction;
@@ -323,7 +329,7 @@ module veripac9 (
                                     ucState <= UCSTATE_FETCH1;
                                 end
                                 I_BNERNN : begin
-                                    // Branch if accum != Ri
+                                    // Branch if accumulator != Ri
                                     if ( accumulator != Ri ) begin
                                         programCounter <= dataCounter;
                                     end
@@ -378,7 +384,13 @@ module veripac9 (
                                 end
                                 I_MOV : begin
                                     // Indirect reference memory with RC and copy result to accumulator
-                                    accumulator <= theRegisters[ Ri[3: 0] ];
+                                    if ( Ri < VERIPAC_RAM_LENGTH ) begin
+                                        accumulator <= ram[ Ri ];
+                                        theRegisters[ 4'hC ] <= theRegisters[ 4'hC ] + 1;
+                                    end
+                                    else begin
+                                        accumulator <= 8'b0;
+                                    end
                                     ucState <= UCSTATE_FETCH1;
                                 end
                                 I_INA : begin
@@ -457,6 +469,32 @@ module veripac9 (
                                     // Unconditional branch
                                     if ( accumulator == 8'b0 ) begin
                                         programCounter <= dataCounter;
+                                    end
+                                    ucState <= UCSTATE_FETCH1;
+                                end
+                                I_LDVANN : begin
+                                    accumulator <= dataCounter;
+                                    ucState <= UCSTATE_FETCH1;
+                                end
+                                I_PSH : begin
+                                    if ( stackPointer == VERIPAC_STACK_SIZE - 1 ) begin
+                                        ucState <= UCSTATE_HALT;
+                                    end
+                                    else begin
+                                        stack[ stackPointer ] <= accumulator;
+                                        stackPointer <= stackPointer + 1;
+                                        ucState <= UCSTATE_FETCH1;
+                                    end
+                                    ucState <= UCSTATE_FETCH1;
+                                end
+                                I_POP : begin
+                                    if ( stackPointer == 0 ) begin
+                                        ucState <= UCSTATE_HALT;
+                                    end
+                                    else begin
+                                        accumulator <= stack[ stackPointer ];
+                                        stackPointer <= stackPointer - 1;
+                                        ucState <= UCSTATE_FETCH1;
                                     end
                                     ucState <= UCSTATE_FETCH1;
                                 end
