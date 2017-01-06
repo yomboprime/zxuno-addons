@@ -29,7 +29,7 @@ la 2ª linea y la columna 12.
 
 Ajuste de Buzzer para la nota FA y ajustamos la
 posición de salida en la 1ª linea y la columna 5
-10000101 = 85 hex
+11000101 = 85 hex
 
 -----------
 

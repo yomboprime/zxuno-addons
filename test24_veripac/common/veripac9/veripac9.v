@@ -61,7 +61,6 @@ module veripac9 (
     localparam I_HALT = 8'hFF;
     localparam I_GTSNN = 8'h14;
     localparam I_RET = 8'h07;
-    localparam I_BDBNN = 8'h10;
     localparam I_BDCNN = 8'h11;
     localparam I_GTONN = 8'h12;
     localparam I_BRZNN = 8'h13;
@@ -71,9 +70,14 @@ module veripac9 (
     localparam I_BLTRNN = 4'h5;
     
     // New instructions not present in original machine
+    localparam I_LDVSPNN = 8'h10;
     localparam I_LDVANN = 8'h0A;
-    localparam I_PSH = 8'h0C;
-    localparam I_POP = 8'h0D;
+    localparam I_PSHA = 8'h0C;
+    localparam I_POPA = 8'h0D;
+    localparam I_PSHR = 8'h0E;
+    localparam I_POPR = 8'h0F;
+    localparam I_BNCNN = 8'h15;
+    localparam I_BCNN = 8'h16;
 
     integer i;
  
@@ -111,6 +115,8 @@ module veripac9 (
     reg [1: 0] ucState = UCSTATE_FETCH1;
     
     // Other signals
+    reg carry = 1'b0;
+    
     reg prevStep = 1'b0;
     
     // Used to fetch the contents of the register affected by the instruction:
@@ -127,7 +133,9 @@ module veripac9 (
         
         isTwoByteInstruction = ( instructionFirstByte[7:4] >= 4'h1 &&
                                  instructionFirstByte[7:4] <= 4'h6 ) ||
-                                 instructionFirstByte == I_LDVANN;
+                                 instructionFirstByte == I_LDVANN ||
+                                 instructionFirstByte == I_PSHR ||
+                                 instructionFirstByte == I_POPR;
     endfunction
     
     function isRegisterInstruction;
@@ -310,12 +318,12 @@ module veripac9 (
                                 end
                                 I_SUBR : begin
                                     // Subtract accumulator from register
-                                    accumulator <= Ri - accumulator;
+                                    { carry, accumulator } <= Ri - accumulator;
                                     ucState <= UCSTATE_FETCH1;
                                 end
                                 I_ADDR : begin
                                     // Add register to accumulator
-                                    accumulator <= Ri + accumulator;
+                                    { carry, accumulator } <= Ri + accumulator;
                                     ucState <= UCSTATE_FETCH1;
                                 end
                                 I_STOR : begin
@@ -368,13 +376,13 @@ module veripac9 (
                                     ucState <= UCSTATE_FETCH1;
                                 end
                                 I_DEC : begin
-                                    // Add 1 to accumulator
-                                    accumulator <= accumulator - 8'b1;
+                                    // Subtract 1 from accumulator
+                                    { carry, accumulator } <= accumulator - 8'b1;
                                     ucState <= UCSTATE_FETCH1;
                                 end
                                 I_INC : begin
                                     // Add 1 to accumulator
-                                    accumulator <= accumulator + 8'b1;
+                                    { carry, accumulator } <= accumulator + 8'b1;
                                     ucState <= UCSTATE_FETCH1;
                                 end
                                 I_RND : begin
@@ -446,13 +454,6 @@ module veripac9 (
                                         ucState <= UCSTATE_FETCH1;
                                     end
                                 end
-                                I_BDBNN : begin
-                                    // Branch if 90 <= accumulator <= 99
-                                    if ( accumulator >= 8'd90 && accumulator <= 8'd99 ) begin
-                                        programCounter <= dataCounter;
-                                    end
-                                    ucState <= UCSTATE_FETCH1;
-                                end
                                 I_BDCNN : begin
                                     // Branch if accum != 0
                                     if ( accumulator != 8'b0 ) begin
@@ -472,11 +473,15 @@ module veripac9 (
                                     end
                                     ucState <= UCSTATE_FETCH1;
                                 end
+                                I_LDVSPNN : begin
+                                    stackPointer <= dataCounter;
+                                    ucState <= UCSTATE_FETCH1;
+                                end
                                 I_LDVANN : begin
                                     accumulator <= dataCounter;
                                     ucState <= UCSTATE_FETCH1;
                                 end
-                                I_PSH : begin
+                                I_PSHA : begin
                                     if ( stackPointer == VERIPAC_STACK_SIZE - 1 ) begin
                                         ucState <= UCSTATE_HALT;
                                     end
@@ -487,7 +492,7 @@ module veripac9 (
                                     end
                                     ucState <= UCSTATE_FETCH1;
                                 end
-                                I_POP : begin
+                                I_POPA : begin
                                     if ( stackPointer == 0 ) begin
                                         ucState <= UCSTATE_HALT;
                                     end
@@ -495,6 +500,42 @@ module veripac9 (
                                         accumulator <= stack[ stackPointer ];
                                         stackPointer <= stackPointer - 1;
                                         ucState <= UCSTATE_FETCH1;
+                                    end
+                                    ucState <= UCSTATE_FETCH1;
+                                end
+                                I_PSHR : begin
+                                    if ( stackPointer == VERIPAC_STACK_SIZE - 1 ) begin
+                                        ucState <= UCSTATE_HALT;
+                                    end
+                                    else begin
+                                        stack[ stackPointer ] <= theRegisters[ dataCounter[3: 0] ];
+                                        stackPointer <= stackPointer + 1;
+                                        ucState <= UCSTATE_FETCH1;
+                                    end
+                                    ucState <= UCSTATE_FETCH1;
+                                end
+                                I_POPR : begin
+                                    if ( stackPointer == 0 ) begin
+                                        ucState <= UCSTATE_HALT;
+                                    end
+                                    else begin
+                                        theRegisters[ dataCounter[3: 0] ] <= stack[ stackPointer ];
+                                        stackPointer <= stackPointer - 1;
+                                        ucState <= UCSTATE_FETCH1;
+                                    end
+                                    ucState <= UCSTATE_FETCH1;
+                                end
+                                I_BNCNN : begin
+                                    // Branch if carry == 0
+                                    if ( carry == 1'b0 ) begin
+                                        programCounter <= dataCounter;
+                                    end
+                                    ucState <= UCSTATE_FETCH1;
+                                end
+                                I_BCNN : begin
+                                    // Branch if carry == 1
+                                    if ( carry == 1'b1 ) begin
+                                        programCounter <= dataCounter;
                                     end
                                     ucState <= UCSTATE_FETCH1;
                                 end
