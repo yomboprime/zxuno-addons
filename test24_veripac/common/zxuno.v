@@ -584,7 +584,7 @@ module zxuno (
     );
 
     veripac9_zxuno veripac (
-        .clk(clk7),
+        .clk(cpuclkplain),
         .zxuno_addr(zxuno_addr),
         .zxuno_regrd(zxuno_regrd),
         .zxuno_regwr(zxuno_regwr),

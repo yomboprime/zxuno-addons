@@ -1,6 +1,42 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
+// Random number generator. It is a Fibonnacci LDR
+// Source: https://en.wikipedia.org/wiki/Linear-feedback_shift_register
+module FLDR16 (
+    input wire clk,
+    input wire request,
+    output wire [7:0] random
+    );
+
+    reg inited = 1'b0;
+    reg [15:0] counter = 16'b0;
+    reg [16:0] seed = 16'b0;
+    
+    assign random = seed[7:0];
+    
+    always @( posedge clk ) begin
+
+        if ( counter < 16'hFE ) begin
+            counter <= counter + 16'b1;
+        end
+        else begin
+            counter <= 16'b1;
+        end
+
+        if ( request == 1'b1 ) begin
+            if ( inited == 1'b0 ) begin
+                seed <= counter;
+                inited <= 1'b1;
+            end
+            else begin 
+                seed <= { seed[ 0 ] ^ seed[ 2 ] ^ seed[ 3 ] ^ seed[ 5 ], seed[ 15: 1 ] };
+            end
+        end
+    end
+    
+endmodule
+
 module veripac9 (
     input wire clk,
     input wire [7:0] addr,
@@ -30,7 +66,7 @@ module veripac9 (
     localparam VERIPAC_NUM_REGS = 8'd16;
     localparam VERIPAC_REGS_START = 8'hF0;
     
-    localparam VERIPAC_STACK_SIZE = 8'd16;
+    localparam VERIPAC_STACK_SIZE = 8'd32;
     
     // Control Unit state
     localparam UCSTATE_FETCH1 = 2'b00;
@@ -92,7 +128,7 @@ module veripac9 (
     reg [7: 0] screen[0: VERIPAC_SCREEN_LENGTH-1];
     initial begin
         for (i=0;i<VERIPAC_SCREEN_LENGTH;i=i+1)
-            screen[i] = 8'b0;
+            screen[i] = 8'h0C;
     end
     
     // The registers
@@ -126,7 +162,17 @@ module veripac9 (
     assign buzzer = instructionReg == I_SIG && ucState == UCSTATE_EXEC;
 
     wire keyWanted;
-    assign keyWanted = ( instructionReg == I_INA || instructionReg == I_INPR ) && ucState == UCSTATE_FETCH2;
+    assign keyWanted = ( instructionReg == I_INA || instructionReg[7: 4] == I_INPR ) && ucState == UCSTATE_EXEC;
+    
+    // Random number generator
+    reg rndRequest = 1'b0;
+    wire [7: 0] rndNumber;
+    FLDR16 theRND(
+        .clk(clk),
+        .request(rndRequest),
+        .random(rndNumber)
+    );
+    
 
     function isTwoByteInstruction;
         input [7: 0] instructionFirstByte;
@@ -259,6 +305,9 @@ module veripac9 (
                             end
                         end
                         else begin
+                            if ( instructionReg == I_RND ) begin
+                                rndRequest <= 1'b1;
+                            end
                             dataCounter <= 8'b0;
                             ucState <= UCSTATE_EXEC;
                         end
@@ -386,8 +435,9 @@ module veripac9 (
                                     ucState <= UCSTATE_FETCH1;
                                 end
                                 I_RND : begin
-                                    // TO-DO Get a random number in accumulator
-                                    accumulator <= 8'h55;
+                                    // Get a random number in accumulator
+                                    accumulator <= rndNumber;
+                                    rndRequest <= 1'b0;
                                     ucState <= UCSTATE_FETCH1;
                                 end
                                 I_MOV : begin
