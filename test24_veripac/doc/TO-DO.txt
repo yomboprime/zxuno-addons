@@ -1,0 +1,8 @@
+
+- poner turbo x4
+
+- La duración de los beeps
+
+- Ponerle los colores ULA+
+
+- instrucciones de impresion en impresora: volcar pantalla, y escribir caracter

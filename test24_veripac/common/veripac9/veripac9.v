@@ -114,6 +114,8 @@ module veripac9 (
     localparam I_POPR = 8'h0F;
     localparam I_BNCNN = 8'h15;
     localparam I_BCNN = 8'h16;
+    localparam I_MOVS = 8'h17;
+    localparam I_CLRB = 8'h06;
 
     integer i;
  
@@ -178,7 +180,8 @@ module veripac9 (
         input [7: 0] instructionFirstByte;
         
         isTwoByteInstruction = ( instructionFirstByte[7:4] >= 4'h1 &&
-                                 instructionFirstByte[7:4] <= 4'h6 ) ||
+                                 instructionFirstByte[7:4] <= 4'h6 &&
+                                 instructionFirstByte != I_MOVS ) ||
                                  instructionFirstByte == I_LDVANN ||
                                  instructionFirstByte == I_PSHR ||
                                  instructionFirstByte == I_POPR;
@@ -312,7 +315,10 @@ module veripac9 (
                             ucState <= UCSTATE_EXEC;
                         end
 
-                        if ( instructionReg == I_OTA || instructionReg[7: 4] == I_OUTR || instructionReg == I_SIG ) begin
+                        if ( instructionReg == I_OTA ||
+                             instructionReg[7: 4] == I_OUTR ||
+                             instructionReg == I_SIG ||
+                             instructionReg == I_MOVS ) begin
                             Ri <= theRegisters[ 4'hB ];
                         end
                         else if ( instructionReg == I_MOV ) begin
@@ -340,18 +346,13 @@ module veripac9 (
                                 I_OUTR : begin
                                     // Output register to screen pointed by RB and inc RB
                                     screen[ Ri[4: 0] ] <= theRegisters[ instructionReg[3: 0] ];
-                                    if ( Ri[4: 0] == 5'h0A ) begin
-                                        theRegisters[ 4'hB ][4: 0] <= 5'b0;
-                                    end
-                                    else begin
-                                        theRegisters[ 4'hB ][4: 0] <= Ri[4: 0] + 1;
-                                    end
+                                    theRegisters[ 4'hB ][4: 0] <= Ri[4: 0] + 1;
                                     ucState <= UCSTATE_FETCH1;
                                 end
                                 I_PAKR : begin
                                     // Pack nibbles
                                     accumulator[7: 4] <= Ri[3: 0];
-                                    accumulator[3: 0] <= theRegisters[ instructionReg[3: 0] ][3: 0];
+                                    accumulator[3: 0] <= theRegisters[ instructionReg[3: 0] + 1'b1 ][3: 0];
                                     ucState <= UCSTATE_FETCH1;
                                 end
                                 I_UNPR : begin
@@ -459,14 +460,7 @@ module veripac9 (
                                 I_OTA : begin
                                     // Output accumulator to screen pointed by RB and inc RB
                                     screen[ Ri[4: 0] ] <= accumulator;
-                                    theRegisters[ 4'hB ] <= theRegisters[ 4'hB ] + 1;
-                                    if ( Ri[4: 0] == 5'h0A ) begin
-                                        theRegisters[ 4'hB ][4: 0] <= 5'b0;
-                                    end
-                                    else begin
-                                        theRegisters[ 4'hB ][4: 0] <= Ri[4: 0] + 1;
-                                    end
-
+                                    theRegisters[ 4'hB ][4: 0] <= Ri[4: 0] + 1;
                                     ucState <= UCSTATE_FETCH1;
                                 end
                                 I_SIG : begin
@@ -487,7 +481,7 @@ module veripac9 (
                                         ucState <= UCSTATE_HALT;
                                     end
                                     else begin
-                                        stack[ stackPointer ] <= programCounter;
+                                        stack[ stackPointer[4:0] ] <= programCounter;
                                         programCounter <= dataCounter;
                                         stackPointer <= stackPointer + 1;
                                         ucState <= UCSTATE_FETCH1;
@@ -499,7 +493,7 @@ module veripac9 (
                                         ucState <= UCSTATE_HALT;
                                     end
                                     else begin
-                                        programCounter <= stack[ stackPointer ];
+                                        programCounter <= stack[ stackPointer[4:0] ];
                                         stackPointer <= stackPointer - 1;
                                         ucState <= UCSTATE_FETCH1;
                                     end
@@ -536,8 +530,8 @@ module veripac9 (
                                         ucState <= UCSTATE_HALT;
                                     end
                                     else begin
-                                        stack[ stackPointer ] <= accumulator;
-                                        stackPointer <= stackPointer + 1;
+                                        stack[ stackPointer[4:0] ] <= accumulator;
+                                        stackPointer <= stackPointer + 1'b1;
                                         ucState <= UCSTATE_FETCH1;
                                     end
                                     ucState <= UCSTATE_FETCH1;
@@ -547,8 +541,8 @@ module veripac9 (
                                         ucState <= UCSTATE_HALT;
                                     end
                                     else begin
-                                        accumulator <= stack[ stackPointer ];
-                                        stackPointer <= stackPointer - 1;
+                                        accumulator <= stack[ ( stackPointer - 1'b1 ) ];
+                                        stackPointer <= stackPointer - 1'b1;
                                         ucState <= UCSTATE_FETCH1;
                                     end
                                     ucState <= UCSTATE_FETCH1;
@@ -558,7 +552,7 @@ module veripac9 (
                                         ucState <= UCSTATE_HALT;
                                     end
                                     else begin
-                                        stack[ stackPointer ] <= theRegisters[ dataCounter[3: 0] ];
+                                        stack[ stackPointer[4:0] ] <= theRegisters[ dataCounter[3: 0] ];
                                         stackPointer <= stackPointer + 1;
                                         ucState <= UCSTATE_FETCH1;
                                     end
@@ -569,7 +563,7 @@ module veripac9 (
                                         ucState <= UCSTATE_HALT;
                                     end
                                     else begin
-                                        theRegisters[ dataCounter[3: 0] ] <= stack[ stackPointer ];
+                                        theRegisters[ dataCounter[3: 0] ] <= stack[ ( stackPointer - 1'b1 ) ];
                                         stackPointer <= stackPointer - 1;
                                         ucState <= UCSTATE_FETCH1;
                                     end
@@ -587,6 +581,15 @@ module veripac9 (
                                     if ( carry == 1'b1 ) begin
                                         programCounter <= dataCounter;
                                     end
+                                    ucState <= UCSTATE_FETCH1;
+                                end
+                                I_MOVS : begin
+                                    accumulator <= screen[ Ri[4: 0 ] ];
+                                    theRegisters[ 4'hB ] <= Ri + 8'b1;
+                                    ucState <= UCSTATE_FETCH1;
+                                end
+                                I_CLRB : begin
+                                    theRegisters[ 4'hB ] <= 8'b0;
                                     ucState <= UCSTATE_FETCH1;
                                 end
                             endcase

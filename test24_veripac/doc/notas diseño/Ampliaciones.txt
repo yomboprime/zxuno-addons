@@ -51,3 +51,9 @@ yellow   1    1
 Character code: see manual for character set.
 
 -----------
+
+The stack is 32 positions.
+It is only accessible throug push/pop, it is not mapped in memory.
+
+
+-----------
