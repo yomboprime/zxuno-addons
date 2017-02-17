@@ -1,0 +1,109 @@
+
+
+Registros de ZX-Uno:
+
+FA: registro de datos
+FB: registro de estado
+
+* Registro de estado:
+
+En escritura: Selecciona qué registro se accede en el registro de datos.
+En lectura: lee cual registro está seleccionado.
+
+* Registro de datos:
+
+En lectura: lee registro actualmente seleccionado.
+En escritura: se escribe en el registro actualmente seleccionado.
+
+Registros de WavUno:
+
+Nota: Donde así se indique, los grupos de registros que forman un número de 16, 24 o de 32 bits se vuelcan
+cuando se escribe el LSByte. Por lo que deben ser escritos de MSB a LSB.
+
+
+* Registro User Pointer (3 bytes)
+
+Puntero para escritura/lectura de memoria desde el Z80
+
+* Registro Sample Write (1 byte)
+
+En escritura: escribe un byte en memoria apuntada por User Pointer, el cual se autoincrementa.
+En lectura: no es válido.
+
+* Registro Sample Read (1 byte)
+
+Permite leer la memoria apuntada por User Pointer.
+El dato estará disponible para lectura en el registro Sample Read tras haber escrito en él cualquier valor primero.
+User Pointer se autoincrementa al escribir en Sample Read.
+
+* Registro Control de Formato (1 byte)
+
+LSB 0 Loop activado
+    1 Stereo activado
+    2 ( Reservado )
+    3 ( Reservado )
+    4 ( Reservado )
+    5 ( Reservado )
+    6 ( Reservado )
+MSB 7 ( Reservado )
+
+Loop activado: Al terminar el sample se carga de nuevo comienzo y fin, y sigue la reproducción.
+
+Stereo activado: El canal es estéreo (samples izquierdo y derecho entrelazados)
+
+* Registro Control de Inicio de Reproduccion (1 byte)
+
+LSB 0 Reproducir
+    1 ( Reservado )
+    2 ( Reservado )
+    3 ( Reservado )
+    4 ( Reservado )
+    5 ( Reservado )
+    6 ( Reservado )
+MSB 7 ( Reservado )
+
+Al escribir en el registro de control de inicio de reproduccion, si Reproducir = 1, el punto de reproducción actual pasa a la direccion de inicio, y se inicia la reproducción. Si reproducir = 0, la reproducción se detiene.
+Cuando acabe la reproducción y si Loop activado = 0 para este canal, el bit Reproducir volverá a 0 automáticamente.
+
+* Registro Control de Fin de Reproduccion (1 byte)
+
+LSB 0 Flag de loop completado
+    1 ( Reservado )
+    2 ( Reservado )
+    3 ( Reservado )
+    4 ( Reservado )
+    5 ( Reservado )
+    6 ( Reservado )
+MSB 7 ( Reservado )
+
+Flag de loop completado: Al terminar la reproducción (es decir, cuando el punto de reproduccion llega a la direccion de fin de reproducción) este flag se levanta a 1.
+El flag sólo volverá a 0 tras escritura por parte de la CPU. Las escrituras de nivel alto "1" son ignoradas bit a bit en este registro, permitiendo dejar inalterados los flags del resto de los canales cuando pones un flag a 0.
+Cuando se usa este bit en la técnica ping-pong con dos búferes, la CPU ha de ser lo bastante rápida para rellenar el segundo búfer y ponerse a esperar el fin de reproducción del primero.
+
+* Registro FrequencyDivider del canal 0 (2 bytes)
+
+Número de 1 a 65536 que divide la frecuencia del reloj de sistema (28 MHz) y da la frecuencia de "sample".
+En el registro se escribe ese número - 1
+Este registro se ha de escribir de MSByte a LSByte.
+
+* Registro de Inicio de reproduccion del canal 0 (3 bytes):
+
+Es la direccion de comienzo de la reproduccion.
+
+Este registro se ha de escribir de MSByte a LSByte.
+
+En lectura: no es válido.
+
+* Registro Direccion de fin de reproduccion del canal 0 (3 bytes):
+
+Es la direccion de fin de la reproduccion.
+Al llegar a esta direccion y si loop está activado, el punto de reproduccion salta al registro Inicio de reproduccion.
+
+Este registro se ha de escribir de MSByte a LSByte.
+
+En lectura: no es válido.
+
+todo:
+
+- check wav audioformat = 1 (pcm)
+

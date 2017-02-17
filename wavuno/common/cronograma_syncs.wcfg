@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="D:/Users/rodriguj/Documents/zxspectrum/zxuno/repositorio/cores/spectrum_v2_spartan6/test23/v4/tb_syncs_isim_beh.wdb" id="1" type="auto">
+         <top_modules>
+            <top_module name="glbl" />
+            <top_module name="tb_syncs" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <WVObjectSize size="10" />
+   <wvobject fp_name="/tb_syncs/clk" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_syncs/hcnt" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">hcnt[8:0]</obj_property>
+      <obj_property name="ObjectShortName">hcnt[8:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_syncs/vcnt" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">vcnt[8:0]</obj_property>
+      <obj_property name="ObjectShortName">vcnt[8:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_syncs/ro" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">ro[2:0]</obj_property>
+      <obj_property name="ObjectShortName">ro[2:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_syncs/go" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">go[2:0]</obj_property>
+      <obj_property name="ObjectShortName">go[2:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_syncs/bo" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">bo[2:0]</obj_property>
+      <obj_property name="ObjectShortName">bo[2:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_syncs/hsync" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">hsync</obj_property>
+      <obj_property name="ObjectShortName">hsync</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_syncs/vsync" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">vsync</obj_property>
+      <obj_property name="ObjectShortName">vsync</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_syncs/csync" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">csync</obj_property>
+      <obj_property name="ObjectShortName">csync</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_syncs/int_n" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">int_n</obj_property>
+      <obj_property name="ObjectShortName">int_n</obj_property>
+   </wvobject>
+</wave_config>

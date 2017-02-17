@@ -483,7 +483,7 @@ module veripac9 (
                                     else begin
                                         stack[ stackPointer[4:0] ] <= programCounter;
                                         programCounter <= dataCounter;
-                                        stackPointer <= stackPointer + 1;
+                                        stackPointer <= stackPointer + 1'b1;
                                         ucState <= UCSTATE_FETCH1;
                                     end
                                 end
@@ -493,8 +493,8 @@ module veripac9 (
                                         ucState <= UCSTATE_HALT;
                                     end
                                     else begin
-                                        programCounter <= stack[ stackPointer[4:0] ];
-                                        stackPointer <= stackPointer - 1;
+                                        programCounter <= stack[ stackPointer - 1'b1 ];
+                                        stackPointer <= stackPointer - 1'b1;
                                         ucState <= UCSTATE_FETCH1;
                                     end
                                 end
@@ -541,7 +541,7 @@ module veripac9 (
                                         ucState <= UCSTATE_HALT;
                                     end
                                     else begin
-                                        accumulator <= stack[ ( stackPointer - 1'b1 ) ];
+                                        accumulator <= stack[ stackPointer - 1'b1 ];
                                         stackPointer <= stackPointer - 1'b1;
                                         ucState <= UCSTATE_FETCH1;
                                     end
@@ -553,7 +553,7 @@ module veripac9 (
                                     end
                                     else begin
                                         stack[ stackPointer[4:0] ] <= theRegisters[ dataCounter[3: 0] ];
-                                        stackPointer <= stackPointer + 1;
+                                        stackPointer <= stackPointer + 1'b1;
                                         ucState <= UCSTATE_FETCH1;
                                     end
                                     ucState <= UCSTATE_FETCH1;
@@ -563,8 +563,8 @@ module veripac9 (
                                         ucState <= UCSTATE_HALT;
                                     end
                                     else begin
-                                        theRegisters[ dataCounter[3: 0] ] <= stack[ ( stackPointer - 1'b1 ) ];
-                                        stackPointer <= stackPointer - 1;
+                                        theRegisters[ dataCounter[3: 0] ] <= stack[ stackPointer - 1'b1 ];
+                                        stackPointer <= stackPointer - 1'b1;
                                         ucState <= UCSTATE_FETCH1;
                                     end
                                     ucState <= UCSTATE_FETCH1;
