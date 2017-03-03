@@ -128,12 +128,12 @@ module zxuno (
    wire [7:0] specdrum_audio;
    wire [7:0] mixer_dout;
    wire oe_n_mixer;
-   wire [7:0] spectrum_audio_left;
-   wire [7:0] spectrum_audio_right;
+   wire [8:0] spectrum_audio_left;
+   wire [8:0] spectrum_audio_right;
    wire [7:0] wav_audio_left;
    wire [7:0] wav_audio_right;
-   wire [7:0] digital_mixed_audio_left;
-   wire [7:0] digital_mixed_audio_right;
+   reg [8:0] left_digital_mixed;
+   reg [8:0] right_digital_mixed;
    
    // Interfaz de acceso al teclado
    wire [4:0] kbdcol;
@@ -700,30 +700,44 @@ module zxuno (
    // These mixers mix all Spectrum channels with Wavuno
    ldrcmixer final_mixer_left(
       .clk(clk28),
-      .audioA(spectrum_audio_left),
+      .audioA( {spectrum_audio_left[8:1] + 8'd128 }[7:0] ),
+      //.audioA(constant_sound),
+      //.audioA(8'd128),
       .audioB(wav_audio_left),
-      .audioOut(digital_mixed_audio_left)
+      .audioOut(left_digital_mixed)
    );
+
    ldrcmixer final_mixer_right(
       .clk(clk28),
-      .audioA(spectrum_audio_right),
+      .audioA( {spectrum_audio_right[8:1] + 8'd128 }[7:0] ),
+      //.audioA(constant_sound),
+      //.audioA(8'd128),
       .audioB(wav_audio_right),
-      .audioOut(digital_mixed_audio_right)
+      .audioOut(right_digital_mixed)
    );
 */
+
+   always @( posedge clk28 ) begin
+      // Convert spectrum audio from 2's complement to natural binary and sum to wavuno
+      left_digital_mixed <= { spectrum_audio_left[8:1] + 8'd128 }[7:0] + wav_audio_left;
+      right_digital_mixed <= { spectrum_audio_right[8:1] + 8'd128 }[7:0] + wav_audio_right;
+   end
+
+
    // DACs
    dac audio_dac_left (
       .DACout(audio_out_left),
-      //.DACin(digital_mixed_audio_left),
-      .DACin(wav_audio_left),
+      .DACin(left_digital_mixed),
+      //.DACin(wav_audio_left),
       .Clk(clk28),
       .Reset(!mrst_n)
    );
-   
+
    dac audio_dac_right (
       .DACout(audio_out_right),
-      //.DACin(digital_mixed_audio_right),
-      .DACin(wav_audio_right),
+      //.DACin(left_digital_mixed),
+      .DACin(right_digital_mixed),
+      //.DACin(wav_audio_right),
       .Clk(clk28),
       .Reset(!mrst_n)
    );

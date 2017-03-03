@@ -157,8 +157,8 @@ module panner_and_mixer (
    input wire [7:0] ay2_chc,
    input wire [7:0] specdrum,
    // --- OUTPUTs ---
-   output wire [7:0] output_left,
-   output wire [7:0] output_right
+   output wire [8:0] output_left,
+   output wire [8:0] output_right
    );
    
    // Register accepts data from CPU
@@ -180,7 +180,8 @@ module panner_and_mixer (
    end
    
    // Mixer
-	wire [7:0] beeper =  ({ear,spk,mic}==4'h0)? 8'd17 :
+
+   wire [7:0] beeper =  ({ear,spk,mic}==4'h0)? 8'd17:
                         ({ear,spk,mic}==3'b001)? 8'd36 :
                         ({ear,spk,mic}==3'b010)? 8'd184 :
                         ({ear,spk,mic}==3'b011)? 8'd192 :
@@ -188,6 +189,18 @@ module panner_and_mixer (
                         ({ear,spk,mic}==3'b101)? 8'd48 :
                         ({ear,spk,mic}==3'b110)? 8'd244 : 
                                                  8'd255;
+
+/*
+   wire [7:0] beeper =  ({ear,spk,mic}==4'h0)? 8'd145:
+                        ({ear,spk,mic}==3'b001)? 8'd164 :
+                        ({ear,spk,mic}==3'b010)? 8'd56 :
+                        ({ear,spk,mic}==3'b011)? 8'd64 :
+                        ({ear,spk,mic}==3'b100)? 8'd150 :
+                        ({ear,spk,mic}==3'b101)? 8'd176 :
+                        ({ear,spk,mic}==3'b110)? 8'd116 : 
+                                                 8'd127;
+*/
+
    reg [11:0] mixleft = 12'h000;
    reg [11:0] mixright = 12'h000;
    reg [8:0] left, right;
@@ -230,7 +243,7 @@ module panner_and_mixer (
                      mixleft <= mixleft + {4'h0, beeper} + {4'h0, specdrum};
                end
          4'd7: begin
-                  if (mixer[2] == 1'b1)   // if beeper+specdrum are going to the right...
+                  if (mixer[0] == 1'b1)   // if beeper+specdrum are going to the right...
                      mixright <= mixright + {4'h0, beeper} + {4'h0, specdrum};
                end
          4'd8: begin // mixleft = 256+(mixleft-128*8)/4 y lo mismo con right
@@ -248,9 +261,70 @@ module panner_and_mixer (
       endcase
       state <= (state == 4'd10)? 4'd0 : state + 4'd1;
    end
-   
+
    assign output_right = right;
    assign output_left = left;
+   
+
+/*
+   wire ay1AB_mix;
+   ldrcmixer mixer_ay1AB(
+      .clk(clk),
+      .audioA(ay1_cha + 8'd128),
+      .audioB(ay1_chb + 8'd128),
+      .audioOut(ay1AB_mix)
+   );
+   
+   wire ay1ABC_mix;
+   ldrcmixer mixer_ay1ABC(
+      .clk(clk),
+      .audioA(ay1AB_mix),
+      .audioB(ay1_chc + 8'd128),
+      .audioOut(ay1ABC_mix)
+   );
+
+   wire ay2AB_mix;
+   ldrcmixer mixer_ay2AB(
+      .clk(clk),
+      .audioA(ay2_cha + 8'd128),
+      .audioB(ay2_chb + 8'd128),
+      .audioOut(ay2AB_mix)
+   );
+   
+   wire ay2ABC_mix;
+   ldrcmixer mixer_ay2ABC(
+      .clk(clk),
+      .audioA(ay2AB_mix),
+      .audioB(ay2_chc + 8'd128),
+      .audioOut(ay2ABC_mix)
+   );
+   
+   wire ay12_mix;
+   ldrcmixer mixer_ay12(
+      .clk(clk),
+      .audioA(ay1ABC_mix),
+      .audioB(ay2ABC_mix),
+      .audioOut(ay12_mix)
+   );
+*/
+
+/*
+   wire final_mix;
+   ldrcmixer mixer_final(
+      .clk(clk),
+      //.audioA(ay12_mix),
+      .audioA(8'd128),
+      //.audioB(beeper),
+      .audioB(8'd128),
+      .audioOut(final_mix)
+   );
+
+   assign output_left = final_mix;
+   assign output_right = final_mix;
+
+   //assign output_left = 8'd128;
+   //assign output_right = 8'd128;
+*/
 
 endmodule
    

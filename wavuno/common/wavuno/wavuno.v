@@ -192,17 +192,21 @@ module wavuno(
 
     // External SRAM Registers
 
+    // Sound sample frequency divider
+    reg [7: 0] extSampleClk = 8'b0;
+
     // *** TODO rename to channelTurn
     reg [1: 0] playCount = 2'b0;
 
     // Current playing pointer to external sram, channel A
     reg [RAM_EXT_ADDR_LENGTH-1: 0] playExtPointerA = 0;
     
-    // Sound sample frequency divider
-    reg [7: 0] extSampleClk = 8'b0;
+    // Current estereo sample turn, channel A
+    reg estereoTurnA = 0;
     
     // Audio output of external ram channel A
-    reg [7: 0] audioOutA = 8'd128;
+    reg [7: 0] audioOutLeftA = 8'd128;
+    reg [7: 0] audioOutRightA = 8'd128;
 
     
     // Returns 0 if input is 0 or bitToKeep if it is 1.
@@ -249,14 +253,14 @@ module wavuno(
     ldrcmixer mixer_left(
         .clk(clk28),
         .audioA(audioOutInt),
-        .audioB(audioOutA),
+        .audioB(audioOutLeftA),
         .audioOut(audio_out_left)
     );
 
     ldrcmixer mixer_right(
         .clk(clk28),
         .audioA(audioOutInt),
-        .audioB(audioOutA),
+        .audioB(audioOutRightA),
         .audioOut(audio_out_right)
     );
 
@@ -272,7 +276,7 @@ module wavuno(
             
                 case ( statusReg )
 
-//                    WAVUNO_REG_INT_SAMPLE_READ: dout = sampleReadRegister;
+                    WAVUNO_REG_INT_SAMPLE_READ: dout = sampleReadRegister;
                     
                     WAVUNO_REG_INT_CONTROL_FORMAT: dout = controlRegisterIntFormat;
                     
@@ -290,7 +294,7 @@ module wavuno(
                     
                     WAVUNO_REG_EXT_USER_POINTER2: dout = { 3'b0, userExtPointer[20: 16] };
 
-//                    WAVUNO_REG_EXT_SAMPLE_READ: dout = sampleReadRegister;
+                    WAVUNO_REG_EXT_SAMPLE_READ: dout = sampleReadRegister;
                     
                     WAVUNO_REG_EXT_CONTROL_FORMAT: dout = controlRegisterExtFormat;
                     
@@ -370,12 +374,12 @@ module wavuno(
                                     theRAM[ userIntPointer ] <= din;
                                     userIntPointer <= userIntPointer + 1;
                                 end
-/*
+
                                 WAVUNO_REG_INT_SAMPLE_READ: begin
                                     sampleReadRegister <= theRAM[ userIntPointer ];
                                     userIntPointer <= userIntPointer + 1;
                                 end
-*/
+
                                 WAVUNO_REG_INT_CONTROL_FORMAT: controlRegisterIntFormat <= din;
 
                                 WAVUNO_REG_INT_CONTROL_BEGIN_REPROD: begin
@@ -391,6 +395,10 @@ module wavuno(
                                     7'b0,
                                     zeroOrKeep( din[ 0 ], controlRegisterIntEndReprod[ 0 ] )
                                 };
+                                
+                                WAVUNO_REG_INT_FREQ_DIVIDER0: intFrequencyDivider[7: 0] <= din;
+                                
+                                WAVUNO_REG_INT_FREQ_DIVIDER1: intFrequencyDivider[15: 8] <= din;
 
                                 WAVUNO_REG_INT_START_LOOP0: intLoopStartPre[7: 0] <= din;
 
@@ -415,13 +423,13 @@ module wavuno(
                                     outputAddress <= userExtPointer;
                                     userExtPointer <= userExtPointer + 1;
                                 end
-/*
+
                                 WAVUNO_REG_EXT_SAMPLE_READ: begin
                                     outputAddress <= userExtPointer;
                                     sampleReadRegister <= exp_sram_data;
                                     userExtPointer <= userExtPointer + 1;
                                 end
-*/
+
                                 WAVUNO_REG_EXT_CONTROL_FORMAT: controlRegisterExtFormat <= din;
 
                                 WAVUNO_REG_EXT_CONTROL_BEGIN_REPROD: begin
@@ -430,6 +438,7 @@ module wavuno(
                                         extLoopStartA <= extLoopStartPreA;
                                         extLoopEndA <= extLoopEndPreA;
                                         playExtPointerA <= extLoopStartPreA;
+                                        estereoTurnA <= 1'b0;
                                     end
                                 end
                                 
@@ -438,7 +447,11 @@ module wavuno(
                                     zeroOrKeep( din[ 0 ], controlRegisterExtEndReprod[ 0 ] )
 
                                 };
-
+                                
+                                WAVUNO_REG_EXT_FREQ_DIVIDER0: extFrequencyDivider[7: 0] <= din;
+                                
+                                WAVUNO_REG_EXT_FREQ_DIVIDER1: extFrequencyDivider[15: 8] <= din;
+                                
                                 // Channel A
                                 
                                 WAVUNO_REG_EXT_START_LOOP0: extLoopStartPreA[7: 0] <= din;
@@ -476,7 +489,7 @@ module wavuno(
         else begin
         
             // Reproduction turn
-        
+
             if ( playCount == 2'b00 ) begin
             
                 // Internal ram channel reproduction
@@ -542,20 +555,49 @@ module wavuno(
                             // If not looping...
                             if ( ! controlRegisterExtFormat[ 0 ] ) begin
                                 // Set audio output to 0
-                                audioOutA <= 8'd128;
+                                audioOutLeftA <= 8'd128;
+                                audioOutRightA <= 8'd128;
                                 // Stop playing
                                 controlRegisterExtBeginReprod[0] <= 0;
                             end
                             else begin
                                 // Else read last sample
                                 outputAddress <= playExtPointerA;
-                                audioOutA <= exp_sram_data;
+                                if ( controlRegisterExtFormat[ 1 ] == 1'b1 ) begin
+                                    // If stereo
+                                    if ( estereoTurnA == 1'b0 ) begin
+                                        audioOutLeftA <= exp_sram_data;
+                                    end
+                                    else begin
+                                        audioOutRightA <= exp_sram_data;
+                                    end
+                                    estereoTurnA <= ! estereoTurnA;
+                                end
+                                else begin
+                                    // If mono
+                                    audioOutLeftA <= exp_sram_data;
+                                    audioOutRightA <= exp_sram_data;
+                                end
                             end
                         end
                         else begin
                             // Read sample and increment play pointer
                             outputAddress <= playExtPointerA;
-                            audioOutA <= exp_sram_data;
+                            if ( controlRegisterExtFormat[ 1 ] == 1'b1 ) begin
+                                // If stereo
+                                if ( estereoTurnA == 1'b0 ) begin
+                                    audioOutLeftA <= exp_sram_data;
+                                end
+                                else begin
+                                    audioOutRightA <= exp_sram_data;
+                                end
+                                estereoTurnA <= ! estereoTurnA;
+                            end
+                            else begin
+                                // If mono
+                                audioOutLeftA <= exp_sram_data;
+                                audioOutRightA <= exp_sram_data;
+                            end
                             playExtPointerA <= playExtPointerA + 1;
                         end
                         
@@ -576,3 +618,13 @@ module wavuno(
     end
     
 endmodule
+
+/*
+
+- carga del registro de frecuencia de sample (int y ext)
+- estereo (y comenzar a hacer las librerias)
+- 4 canales
+
+
+- preguntar en el grupo a mcleod cómo especificar que un array esté en bram
+*/

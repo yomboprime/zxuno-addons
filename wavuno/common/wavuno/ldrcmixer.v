@@ -17,11 +17,16 @@ initial begin
     $readmemh( "compressorLUT.list", ldrcLookupTable, 0, lookupTableSize );
 end
 
-reg [8: 0] sum = 0;
+reg [7: 0] audioAreg = 8'd128;
+reg [7: 0] audioBreg = 8'd128;
+reg [8: 0] sum = 9'd256;
 
 always @( posedge clk ) begin
 
-    sum <= audioA + audioB;
+	audioAreg <= audioA;
+	audioBreg <= audioB;
+
+    sum <= audioAreg + audioBreg;
 
     // If input is positive
     if ( sum[8] == 1'b1 ) begin
