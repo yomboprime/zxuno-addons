@@ -618,13 +618,3 @@ module wavuno(
     end
     
 endmodule
-
-/*
-
-- carga del registro de frecuencia de sample (int y ext)
-- estereo (y comenzar a hacer las librerias)
-- 4 canales
-
-
-- preguntar en el grupo a mcleod cómo especificar que un array esté en bram
-*/
