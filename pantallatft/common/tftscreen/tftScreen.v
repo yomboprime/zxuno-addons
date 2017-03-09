@@ -150,16 +150,14 @@ always @ (posedge clk) begin
 			// frame buffer loop
 			default: begin
 			
-				if ( vc == 8'd216 ) begin // 192 + 24
-				    if ( hc == 0 ) begin
-						// 'Write to screen' command
-						screenRS <= 1'b0;
-						screenData <= 16'h002C; // Start pixel writing
-						writeState <= WRITE_START;
-					end
+				if ( vc == 8'd215 && hc == 9'd300 ) begin // y = 192 + 24, x == 320 - 20
+					// 'Write to screen' command
+					screenRS <= 1'b0;
+					screenData <= 16'h002C; // Start pixel writing
+					writeState <= WRITE_START;
 				end
 				else begin
-					if ( vc < 241 ) begin
+					if ( vc < 240 ) begin
 						if ( hc < 320 ) begin
 							screenRS <= 1'b1;
 							screenData <= { b, 2'b00, g, 3'b000, r, 2'b00 };
