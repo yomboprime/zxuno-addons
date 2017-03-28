@@ -5,9 +5,9 @@ Los bytes pueden estar separados por líneas, espacios y comentarios.
 
 Comentarios de línea comenzando con "#"
 
-"!": Fin / separación de programas con
+"!": Fin / separación de programas con HALT
 
-La marca especial "$" finaliza el programa y vuelve la ejecución al principio del fichero, sólo si el
+La marca especial "$" finaliza el programa al encontrar el HALT y vuelve la ejecución al principio del fichero, sólo si el
 acumulador vale > 0. Si no, continua la ejecucion del siguiente programa en orden secuencial.
 
 La instrucción HALT (FF) pasa al siguiente programa.

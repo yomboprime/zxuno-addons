@@ -116,6 +116,7 @@ module veripac9 (
     localparam I_BCNN = 8'h16;
     localparam I_MOVS = 8'h17;
     localparam I_CLRB = 8'h06;
+    localparam I_ANDA = 8'h18;
 
     integer i;
  
@@ -184,7 +185,8 @@ module veripac9 (
                                  instructionFirstByte != I_MOVS ) ||
                                  instructionFirstByte == I_LDVANN ||
                                  instructionFirstByte == I_PSHR ||
-                                 instructionFirstByte == I_POPR;
+                                 instructionFirstByte == I_POPR ||
+                                 instructionFirstByte == I_ANDA;
     endfunction
     
     function isRegisterInstruction;
@@ -591,6 +593,9 @@ module veripac9 (
                                 I_CLRB : begin
                                     theRegisters[ 4'hB ] <= 8'b0;
                                     ucState <= UCSTATE_FETCH1;
+                                end
+                                I_ANDA : begin
+                                    accumulator <= accumulator & dataCounter;
                                 end
                             endcase
                         end
