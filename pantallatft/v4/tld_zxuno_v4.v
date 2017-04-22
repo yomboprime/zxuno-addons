@@ -45,6 +45,11 @@ module tld_zxuno_v4 (
    output wire tftRS,
    output wire tftRESET,
    output wire [15:0] tftData,
+   input wire tftT_CLK,
+   input wire tftT_CS,
+   input wire tftT_DIN,
+   input wire tftT_DO,
+   input wire tftT_IRQ,
    
    output wire [20:0] sram_addr,
    inout wire [7:0] sram_data,

@@ -169,7 +169,7 @@ module ula_radas (
 
     // TFT Screen output module
     TFTScreen theTFTScreen(
-     .clk(clk28),
+     .clk(clk14),
      .r(r),
      .g(g),
      .b(b),

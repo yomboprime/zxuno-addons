@@ -51,7 +51,7 @@ initial screenRS = 1'b1;
 initial screenRESET = 1'b1;
 
 // Clock cycles per ms
-parameter TICKS_MS = 28000;
+parameter TICKS_MS = 14000;
 
 // Init Sequence Data (based upon https://github.com/notro/fbtft/blob/master/fb_ili9341.c)
 localparam INIT_SEQ_LEN = 174;
@@ -75,27 +75,32 @@ reg[23:0] remainingDelayTicks = 24'b0;
 reg [2:0] state = START;
 
 // State machine for one memory write operation
-parameter WRITE_IDLE = 2'd0;
-parameter WRITE_START = 2'd1;
+//parameter WRITE_IDLE = 2'd0;
+//parameter WRITE_START = 2'd1;
 parameter WRITE_MAKE = 2'd2;
 parameter WRITE_FINISH = 2'd3;
 
-reg [1:0] writeState = WRITE_IDLE;
+reg [1:0] writeState = WRITE_FINISH;
 
 
 always @ (posedge clk) begin
-		
+
+/*
 	if ( writeState == WRITE_START ) begin
 		screenWR <= 1'b0;
 		writeState <= WRITE_MAKE;
 	end
-	else if ( writeState == WRITE_MAKE ) begin
+	else 
+*/
+	if ( writeState == WRITE_MAKE ) begin
 		screenWR <= 1'b1;
 		writeState <= WRITE_FINISH;
 	end
+/*
 	else if ( writeState == WRITE_FINISH ) begin
 		writeState <= WRITE_IDLE;
 	end
+*/
 	else if (remainingDelayTicks > 0) begin
 		remainingDelayTicks <= remainingDelayTicks - 1'b1;
 	end
@@ -106,7 +111,7 @@ always @ (posedge clk) begin
 				remainingDelayTicks <= 200 * TICKS_MS;
 				state <= HOLD_RESET;
 			end
-			
+
 			HOLD_RESET: begin
 				screenRESET <= 1'b1;
 				remainingDelayTicks <= 120 * TICKS_MS;
@@ -117,7 +122,8 @@ always @ (posedge clk) begin
 				if (initSeqCounter < INIT_SEQ_LEN) begin
 					screenRS <= INIT_SEQ[initSeqCounter][0];
 					screenData <= { 8'h00, INIT_SEQ[initSeqCounter + 1'b1] };
-					writeState <= WRITE_START;
+					writeState <= WRITE_MAKE;
+					screenWR <= 1'b0;
 					initSeqCounter <= initSeqCounter + 2'd2;
 				end else begin
 					state <= WAIT_FOR_POWERUP;
@@ -128,7 +134,8 @@ always @ (posedge clk) begin
 			WAIT_FOR_POWERUP: begin
 				screenRS <= 1'b0;
 				screenData <= 16'h0011; // take out of sleep mode
-				writeState <= WRITE_START;
+				writeState <= WRITE_MAKE;
+                screenWR <= 1'b0;
 				remainingDelayTicks <= 120 * TICKS_MS;
 				state <= TURN_ON_DISPLAY;
 			end
@@ -136,14 +143,16 @@ always @ (posedge clk) begin
 			TURN_ON_DISPLAY: begin
 				screenRS <= 1'b0;
 				screenData <= 16'h0029; // Turn on display
-				writeState <= WRITE_START;
+				writeState <= WRITE_MAKE;
+                screenWR <= 1'b0;
 				state <= START_WRITING;
 			end
 
 			START_WRITING: begin
 				screenRS <= 1'b0;
 				screenData <= 16'h002C; // Start pixel writing
-				writeState <= WRITE_START;
+				writeState <= WRITE_MAKE;
+                screenWR <= 1'b0;
 				state <= LOOP;
 			end
 
@@ -154,14 +163,16 @@ always @ (posedge clk) begin
 					// 'Write to screen' command
 					screenRS <= 1'b0;
 					screenData <= 16'h002C; // Start pixel writing
-					writeState <= WRITE_START;
+					writeState <= WRITE_MAKE;
+                    screenWR <= 1'b0;
 				end
 				else begin
 					if ( vc < 240 ) begin
 						if ( hc < 320 ) begin
 							screenRS <= 1'b1;
 							screenData <= { b, 2'b00, g, 3'b000, r, 2'b00 };
-							writeState <= WRITE_START;
+							writeState <= WRITE_MAKE;
+                            screenWR <= 1'b0;
 						end
 					end
 				end
