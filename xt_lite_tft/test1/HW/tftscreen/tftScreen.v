@@ -33,7 +33,13 @@ parameter initSeqName = "initSequence.list";
 parameter TICKS_MS = 25000;
 
 // Screen X offset
-parameter END_X = 10'd799;
+//parameter END_X = 10'd799;
+
+// Screen Y offset
+//parameter END_Y = 10'd420;
+
+// Screen X offset
+parameter END_X = 10'd20;
 
 // Screen Y offset
 parameter END_Y = 10'd420;
@@ -164,7 +170,12 @@ always @ (posedge clk) begin
                     screenWR <= 1'b0;
                 end
                 else begin
-                    if ( hc < 640 && vc < 440 && ( ( vc[0] == 1'b0 ) || ( vc >= 400 ) ) ) begin
+                    // Write if coordinates are in [640, 400] in even lines, or in [640, 440] in odd or even lines
+                    // (half resolution i.e. 320x200, and fill to 240 lines)
+                    // Write also if we are in the last pixel ( hc == 640 && vc == 440 ) because we have lost previously
+                    // one cycle when executing the 'write pixels' command.
+                    if ( ( hc < 640 && vc < 440 && ( ( vc[0] == 1'b0 ) || ( vc >= 400 ) ) ) ||
+                         ( hc == 640 && vc == 440 ) begin
                         screenRS <= 1'b1;
                         screenData <= { b, g, r };
                         writeState <= WRITE_MAKE;
