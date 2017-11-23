@@ -1,7 +1,7 @@
 /*
 
 	Code derived from https://github.com/thekroko/ili9341_fpga
-	
+
 	2017 Adapted by Yomboprime from SPI interface to 16 bit parallel
 
 
@@ -90,7 +90,7 @@ always @ (posedge clk) begin
 		screenWR <= 1'b0;
 		writeState <= WRITE_MAKE;
 	end
-	else 
+	else
 */
 	if ( writeState == WRITE_MAKE ) begin
 		screenWR <= 1'b1;
@@ -117,7 +117,7 @@ always @ (posedge clk) begin
 				remainingDelayTicks <= 120 * TICKS_MS;
 				state <= SEND_INIT_SEQ;
 			end
-			
+
 			SEND_INIT_SEQ: begin
 				if (initSeqCounter < INIT_SEQ_LEN) begin
 					screenRS <= INIT_SEQ[initSeqCounter][0];
@@ -158,7 +158,7 @@ always @ (posedge clk) begin
 
 			// frame buffer loop
 			default: begin
-			
+
 				if ( vc == 8'd215 && hc == 9'd300 ) begin // y = 192 + 24, x == 320 - 20
 					// 'Write to screen' command
 					screenRS <= 1'b0;
@@ -167,21 +167,18 @@ always @ (posedge clk) begin
                     screenWR <= 1'b0;
 				end
 				else begin
-					if ( vc < 240 ) begin
-						if ( hc < 320 ) begin
-							screenRS <= 1'b1;
-							screenData <= { b, 2'b00, g, 3'b000, r, 2'b00 };
-							writeState <= WRITE_MAKE;
-                            screenWR <= 1'b0;
-						end
+					if ( ( vc < 240 && hc < 320 ) || ( vc == 240 && hc < 321 ) ) begin
+						screenRS <= 1'b1;
+						screenData <= { b, 2'b00, g, 3'b000, r, 2'b00 };
+						writeState <= WRITE_MAKE;
+                        screenWR <= 1'b0;
 					end
 				end
 
 			end
 		endcase
 	end
-	
+
 end
 
 endmodule
-
