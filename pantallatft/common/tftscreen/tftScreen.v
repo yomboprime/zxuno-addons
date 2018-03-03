@@ -4,6 +4,11 @@
 
 	2017 Adapted by Yomboprime from SPI interface to 16 bit parallel
 
+	ILI9341 commands init sequence obtained from https://github.com/notro/fbtft/blob/master/fb_ili9341.c
+
+	SSD1289 commands init sequence obtained from UTFT library  (CC BY-NC-SA 3.0) http://www.rinkydinkelectronics.com/library.php?id=51
+
+Note: To change screen model or orientation, comment out lines as described below in the code.
 
 Note: To rotate the image 180º in the screen, in the file initSequence.list:
 
@@ -26,8 +31,17 @@ A0
 00
 2A
 
-*/
 
+
+
+---- Change 2B here: screen contrast
+00
+C5
+01
+2B
+
+
+*/
 
 `default_nettype none
 
@@ -45,6 +59,22 @@ module TFTScreen(
 	output reg [15:0] screenData
 );
 
+
+// ***** Change here the screen type or rotation ****
+// Un/comment both the sequence length and the .list file name
+
+// ILI9341 normal rotation
+//localparam INIT_SEQ_LEN = 174;
+//localparam INIT_SEQ_FILE = "initSequence_9341_0.list";
+
+// ILI9341 180º rotation
+//localparam INIT_SEQ_LEN = 174;
+//localparam INIT_SEQ_FILE = "initSequence_9341_180.list";
+
+// SSD1289
+localparam INIT_SEQ_LEN = 248;
+localparam INIT_SEQ_FILE = "initSequence_SSD1289.list";
+
 assign screenRD = 1'b1;
 initial screenWR = 1'b1;
 initial screenRS = 1'b1;
@@ -53,12 +83,11 @@ initial screenRESET = 1'b1;
 // Clock cycles per ms
 parameter TICKS_MS = 14000;
 
-// Init Sequence Data (based upon https://github.com/notro/fbtft/blob/master/fb_ili9341.c)
-localparam INIT_SEQ_LEN = 174;
+// Init Sequence Data
 reg[7:0] initSeqCounter = 8'b0;
 reg[7:0] INIT_SEQ [0:INIT_SEQ_LEN-1];
 initial begin
-  $readmemh( "initSequence.list", INIT_SEQ, 0, INIT_SEQ_LEN - 1 );
+  $readmemh( INIT_SEQ_FILE, INIT_SEQ, 0, INIT_SEQ_LEN - 1 );
 end
 
 
@@ -126,7 +155,8 @@ always @ (posedge clk) begin
 					screenWR <= 1'b0;
 					initSeqCounter <= initSeqCounter + 2'd2;
 				end else begin
-					state <= WAIT_FOR_POWERUP;
+					//state <= WAIT_FOR_POWERUP;
+					state <= LOOP;
 					remainingDelayTicks <= 10 * TICKS_MS;
 				end
 			end
